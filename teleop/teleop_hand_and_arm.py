@@ -24,6 +24,7 @@ sys.path.append(parent_dir)
 from robot_control.robot_hand import H1HandController
 from teleop.robot_control.robot_arm import H1ArmController
 from teleop.robot_control.robot_arm_ik import Arm_IK
+import time
 
 
 def image_receiver(image_queue, resolution, crop_size_w, crop_size_h):
@@ -88,10 +89,10 @@ class VuerTeleop:
         self.img_array = np.ndarray((self.img_shape[0], self.img_shape[1], 3), dtype=np.uint8, buffer=self.shm.buf)
         image_queue = Queue()
         toggle_streaming = Event()
-        self.tv = OpenTeleVision(self.resolution_cropped, self.shm.name, image_queue, toggle_streaming)
+        self.tv = OpenTeleVision(self.resolution_cropped, self.shm.name, image_queue, toggle_streaming, ngrok=True)
         self.processor = VuerPreprocessor()
 
-        RetargetingConfig.set_default_urdf_dir('../assets')
+        RetargetingConfig.set_default_urdf_dir('/home/gp25/git/sereact/avp_teleoperate/assets')
         with Path(config_file_path).open('r') as f:
             cfg = yaml.safe_load(f)
         left_retargeting_config = RetargetingConfig.from_dict(cfg['left'])
@@ -117,13 +118,15 @@ class VuerTeleop:
 if __name__ == '__main__':
     manager = Manager()
     image_queue = manager.Queue()
-    teleoperator = VuerTeleop('inspire_hand.yml')
-    h1hand = H1HandController()
+    teleoperator = VuerTeleop('/home/gp25/git/sereact/avp_teleoperate/teleop/inspire_hand.yml')
+    # h1hand = H1HandController()
     h1arm = H1ArmController()
     arm_ik = Arm_IK()
     sm = SharedMemoryImage((480,640))
-    image_process = Process(target=image_receiver, args=(sm, teleoperator.resolution, teleoperator.crop_size_w, teleoperator.crop_size_h))
-    image_process.start()
+    # image_process = Process(target=image_receiver, args=(sm, teleoperator.resolution, teleoperator.crop_size_w, teleoperator.crop_size_h))
+    # image_process.start()
+
+    steps = 20
             
     try:
         user_input = input("Please enter the start signal (enter 's' to start the subsequent program):")
@@ -131,16 +134,19 @@ if __name__ == '__main__':
             while True:
                 armstate = None
                 armv = None 
-                frame = sm.read_image()
-                np.copyto(teleoperator.img_array, np.array(frame))
-                handstate = h1hand.get_hand_state()
+                # frame = sm.read_image()
+                # np.copyto(teleoperator.img_array, np.array(frame))
+                # handstate = h1hand.get_hand_state()
 
                 q_poseList=np.zeros(35)
                 q_tau_ff=np.zeros(35)
-                armstate,armv = h1arm.GetMotorState()
+                armstate,armv = h1arm.GetMotorState() # arm state:14 (rad), arm vel: 14 (rad/s)
 
                 head_rmat, left_pose, right_pose, left_qpos, right_qpos = teleoperator.step()
-                sol_q ,tau_ff, flag = arm_ik.ik_fun(left_pose, right_pose, armstate,armv)
+                sol_q ,tau_ff, flag = arm_ik.ik_fun(left_pose, right_pose, armstate,armv) # sol_q: 14 (rad), tau_ff: 14 (Nm)
+                print("===========left_pose",left_pose)
+                print("===========right_pose",right_pose)
+
                 
                 if flag:
                     q_poseList[13:27] = sol_q
@@ -148,8 +154,11 @@ if __name__ == '__main__':
                 else:
                     q_poseList[13:27] = armstate
                     q_tau_ff = np.zeros(35)
-
+                
+                time.sleep(0.05)
+                continue
                 h1arm.SetMotorPose(q_poseList, q_tau_ff)
+                time.sleep(0.05)
 
                 if right_qpos is not None and left_qpos is not None:
                     # 4,5: index 6,7: middle, 0,1: pinky, 2,3: ring, 8,9: thumb
@@ -160,7 +169,7 @@ if __name__ == '__main__':
                     left_angles = [1.7- left_qpos[i] for i in  [4, 6, 2, 0]]
                     left_angles.append(1.2 - left_qpos[8])
                     left_angles.append(0.5 - left_qpos[9])
-                    h1hand.crtl(right_angles,left_angles)
+                    # h1hand.crtl(right_angles,left_angles)
 
     except KeyboardInterrupt:
         exit(0)

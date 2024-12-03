@@ -32,10 +32,10 @@ class VuerTeleop:
         self.img_array = np.ndarray((self.img_shape[0], self.img_shape[1], 3), dtype=np.uint8, buffer=self.shm.buf)
         image_queue = Queue()
         toggle_streaming = Event()
-        self.tv = OpenTeleVision(self.resolution_cropped, self.shm.name, image_queue, toggle_streaming)
+        self.tv = OpenTeleVision(self.resolution_cropped, self.shm.name, image_queue, toggle_streaming,ngrok=True)
         self.processor = VuerPreprocessor()
 
-        RetargetingConfig.set_default_urdf_dir('../assets')
+        RetargetingConfig.set_default_urdf_dir('/home/gp25/git/sereact/avp_teleoperate/assets')
         with Path(config_file_path).open('r') as f:
             cfg = yaml.safe_load(f)
         left_retargeting_config = RetargetingConfig.from_dict(cfg['left'])
@@ -103,7 +103,7 @@ class Sim:
         cube_asset_options.density = 10
         cube_asset = self.gym.create_box(self.sim, 0.05, 0.05, 0.05, cube_asset_options)
 
-        asset_root = "../assets"
+        asset_root = "/home/gp25/git/sereact/avp_teleoperate/assets"
         left_asset_path = "inspire_hand/inspire_hand_left.urdf"
         right_asset_path = "inspire_hand/inspire_hand_right.urdf"
         asset_options = gymapi.AssetOptions()
@@ -252,7 +252,7 @@ class Sim:
 
 
 if __name__ == '__main__':
-    teleoperator = VuerTeleop('inspire_hand.yml')
+    teleoperator = VuerTeleop('/home/gp25/git/sereact/avp_teleoperate/teleop/inspire_hand.yml')
     simulator = Sim()
 
     try:

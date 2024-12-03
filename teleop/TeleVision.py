@@ -105,11 +105,23 @@ class OpenTeleVision:
             # with self.right_landmarks_shared.get_lock():
             #     self.right_landmarks_shared[:] = np.array(event.value["rightLandmarks"]).flatten()
             self.left_hand_shared[:] = event.value["leftHand"]
+        except:
+            print("left hand is missing!!!")
+        
+        try:
             self.right_hand_shared[:] = event.value["rightHand"]
+        except:
+            print("right hand is missing!!!")
+        
+        try:
             self.left_landmarks_shared[:] = np.array(event.value["leftLandmarks"]).flatten()
+        except:
+            print("left landmarks are missing!!!")
+        
+        try:
             self.right_landmarks_shared[:] = np.array(event.value["rightLandmarks"]).flatten()
         except: 
-            pass
+            print("right landmarks are missing!!!")
     
     async def main_webrtc(self, session, fps=60):
         session.set @ DefaultScene(frameloop="always")
@@ -148,45 +160,45 @@ class OpenTeleVision:
             # to="bgChildren",
             # )
 
-            session.upsert(
-            [ImageBackground(
-                # Can scale the images down.
-                display_image[::2, :self.img_width],
-                # display_image[:self.img_height:2, ::2],
-                # 'jpg' encoding is significantly faster than 'png'.
-                format="jpeg",
-                quality=80,
-                key="left-image",
-                interpolate=True,
-                # fixed=True,
-                aspect=1.66667,
-                # distanceToCamera=0.5,
-                height = 8,
-                position=[0, -1, 3],
-                # rotation=[0, 0, 0],
-                layers=1, 
-                alphaSrc="./vinette.jpg"
-            ),
-            ImageBackground(
-                # Can scale the images down.
-                display_image[::2, self.img_width:],
-                # display_image[self.img_height::2, ::2],
-                # 'jpg' encoding is significantly faster than 'png'.
-                format="jpeg",
-                quality=80,
-                key="right-image",
-                interpolate=True,
-                # fixed=True,
-                aspect=1.66667,
-                # distanceToCamera=0.5,
-                height = 8,
-                position=[0, -1, 3],
-                # rotation=[0, 0, 0],
-                layers=2, 
-                alphaSrc="./vinette.jpg"
-            )],
-            to="bgChildren",
-            )
+            # session.upsert(
+            # [ImageBackground(
+            #     # Can scale the images down.
+            #     display_image[::2, :self.img_width],
+            #     # display_image[:self.img_height:2, ::2],
+            #     # 'jpg' encoding is significantly faster than 'png'.
+            #     format="jpeg",
+            #     quality=80,
+            #     key="left-image",
+            #     interpolate=True,
+            #     # fixed=True,
+            #     aspect=1.66667,
+            #     # distanceToCamera=0.5,
+            #     height = 8,
+            #     position=[0, -1, 3],
+            #     # rotation=[0, 0, 0],
+            #     layers=1, 
+            #     alphaSrc="./vinette.jpg"
+            # ),
+            # ImageBackground(
+            #     # Can scale the images down.
+            #     display_image[::2, self.img_width:],
+            #     # display_image[self.img_height::2, ::2],
+            #     # 'jpg' encoding is significantly faster than 'png'.
+            #     format="jpeg",
+            #     quality=80,
+            #     key="right-image",
+            #     interpolate=True,
+            #     # fixed=True,
+            #     aspect=1.66667,
+            #     # distanceToCamera=0.5,
+            #     height = 8,
+            #     position=[0, -1, 3],
+            #     # rotation=[0, 0, 0],
+            #     layers=2, 
+            #     alphaSrc="./vinette.jpg"
+            # )],
+            # to="bgChildren",
+            # )
             await asyncio.sleep(0.03)
 
     @property
